@@ -31,9 +31,10 @@ set(mitk_modules
   Segmentation
   PlanarFigureSegmentation
   OpenViewCore
-  QmlItems
   QtWidgets
   QtWidgetsExt
+  QtWidgetsWeb
+  QmlItems
   SegmentationUI
   DiffusionImaging
   GPGPU

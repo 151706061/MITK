@@ -32,6 +32,7 @@ mitk::DICOMITKSeriesGDCMReader::DICOMITKSeriesGDCMReader( unsigned int decimalPl
 : DICOMFileReader()
 , m_FixTiltByShearing( true )
 , m_DecimalPlacesForOrientation( decimalPlacesForOrientation )
+, m_ExternalCache(false)
 {
   this->EnsureMandatorySortersArePresent( decimalPlacesForOrientation );
 }
@@ -48,6 +49,7 @@ mitk::DICOMITKSeriesGDCMReader::DICOMITKSeriesGDCMReader( const DICOMITKSeriesGD
 , m_ReplacedCinLocales( other.m_ReplacedCinLocales )
 , m_DecimalPlacesForOrientation( other.m_DecimalPlacesForOrientation )
 , m_TagCache( other.m_TagCache )
+, m_ExternalCache(other.m_ExternalCache)
 {
 }
 
@@ -86,9 +88,9 @@ bool mitk::DICOMITKSeriesGDCMReader::operator==( const DICOMFileReader& other ) 
       if ( this->m_Sorter.size() != otherSelf->m_Sorter.size() )
         return false;
 
-      auto mySorterIter = this->m_Sorter.begin();
-      auto oSorterIter  = otherSelf->m_Sorter.begin();
-      for ( ; mySorterIter != this->m_Sorter.end() && oSorterIter != otherSelf->m_Sorter.end();
+      auto mySorterIter = this->m_Sorter.cbegin();
+      auto oSorterIter  = otherSelf->m_Sorter.cbegin();
+      for ( ; mySorterIter != this->m_Sorter.cend() && oSorterIter != otherSelf->m_Sorter.cend();
             ++mySorterIter, ++oSorterIter )
       {
         if ( !( **mySorterIter == **oSorterIter ) )
@@ -111,6 +113,7 @@ bool mitk::DICOMITKSeriesGDCMReader::operator==( const DICOMFileReader& other ) 
 
 void mitk::DICOMITKSeriesGDCMReader::SetFixTiltByShearing( bool on )
 {
+  this->Modified();
   m_FixTiltByShearing = on;
 }
 
@@ -121,6 +124,7 @@ bool mitk::DICOMITKSeriesGDCMReader::GetFixTiltByShearing() const
 
 void mitk::DICOMITKSeriesGDCMReader::SetAcceptTwoSlicesGroups( bool accept ) const
 {
+  this->Modified();
   m_EquiDistantBlocksSorter->SetAcceptTwoSlicesGroups( accept );
 }
 
@@ -278,7 +282,7 @@ void mitk::DICOMITKSeriesGDCMReader::AnalyzeInputFiles()
   timeStop( "Check input for DCM" );
 
   // scan files for sorting-relevant tags
-  if ( m_TagCache.IsNull() )
+  if ( m_TagCache.IsNull() || ( m_TagCache->GetMTime()<this->GetMTime() && !m_ExternalCache ))
   {
     timeStart( "Tag scanning" );
     DICOMGDCMTagScanner::Pointer filescanner = DICOMGDCMTagScanner::New();
@@ -398,7 +402,7 @@ void mitk::DICOMITKSeriesGDCMReader::AnalyzeInputFiles()
 }
 
 mitk::DICOMITKSeriesGDCMReader::SortingBlockList mitk::DICOMITKSeriesGDCMReader::InternalExecuteSortingStep(
-  unsigned int sortingStepIndex, DICOMDatasetSorter::Pointer sorter, const SortingBlockList& input )
+  unsigned int sortingStepIndex, const DICOMDatasetSorter::Pointer& sorter, const SortingBlockList& input )
 {
   SortingBlockList nextStepSorting; // we should not modify our input list while processing it
   std::stringstream ss;
@@ -418,6 +422,7 @@ mitk::DICOMITKSeriesGDCMReader::SortingBlockList mitk::DICOMITKSeriesGDCMReader:
     const DICOMGDCMImageFrameList& gdcmInfoFrameList = *blockIter;
     const DICOMDatasetList datasetList               = ToDICOMDatasetList( gdcmInfoFrameList );
 
+#if defined( MBILOG_ENABLE_DEBUG )
     MITK_DEBUG << "--------------------------------------------------------------------------------";
     MITK_DEBUG << "DICOMITKSeriesGDCMReader: " << ss.str() << ", dataset group " << groupIndex << " ("
                << datasetList.size() << " datasets): ";
@@ -425,6 +430,7 @@ mitk::DICOMITKSeriesGDCMReader::SortingBlockList mitk::DICOMITKSeriesGDCMReader:
     {
       MITK_DEBUG << "  INPUT     : " << ( *oi )->GetFilenameIfAvailable();
     }
+#endif
 
     sorter->SetInput( datasetList );
     sorter->Sort();
@@ -554,6 +560,7 @@ void mitk::DICOMITKSeriesGDCMReader::AddSortingElement( DICOMDatasetSorter* sort
   {
     m_Sorter.push_back( sorter );
   }
+  this->Modified();
 }
 
 mitk::DICOMITKSeriesGDCMReader::ConstSorterList
@@ -602,12 +609,14 @@ void mitk::DICOMITKSeriesGDCMReader::SetToleratedOriginOffsetToAdaptive( double 
 {
   assert( m_EquiDistantBlocksSorter.IsNotNull() );
   m_EquiDistantBlocksSorter->SetToleratedOriginOffsetToAdaptive( fractionOfInterSliceDistance );
+  this->Modified();
 }
 
 void mitk::DICOMITKSeriesGDCMReader::SetToleratedOriginOffset( double millimeters ) const
 {
   assert( m_EquiDistantBlocksSorter.IsNotNull() );
   m_EquiDistantBlocksSorter->SetToleratedOriginOffset( millimeters );
+  this->Modified();
 }
 
 double mitk::DICOMITKSeriesGDCMReader::GetToleratedOriginError() const
@@ -635,6 +644,7 @@ mitk::DICOMTagCache::Pointer mitk::DICOMITKSeriesGDCMReader::GetTagCache() const
 void mitk::DICOMITKSeriesGDCMReader::SetTagCache( const DICOMTagCache::Pointer& tagCache )
 {
   m_TagCache = tagCache;
+  m_ExternalCache = tagCache.IsNotNull();
 }
 
 mitk::DICOMTagList mitk::DICOMITKSeriesGDCMReader::GetTagsOfInterest() const

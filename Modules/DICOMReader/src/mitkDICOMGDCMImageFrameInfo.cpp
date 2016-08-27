@@ -25,7 +25,7 @@ mitk::DICOMGDCMImageFrameInfo
 }
 
 mitk::DICOMGDCMImageFrameInfo
-::DICOMGDCMImageFrameInfo(DICOMImageFrameInfo::Pointer frameinfo)
+::DICOMGDCMImageFrameInfo(const DICOMImageFrameInfo::Pointer& frameinfo)
 :itk::LightObject()
 ,m_FrameInfo(frameinfo)
 ,m_TagForValue()
@@ -33,7 +33,7 @@ mitk::DICOMGDCMImageFrameInfo
 }
 
 mitk::DICOMGDCMImageFrameInfo
-::DICOMGDCMImageFrameInfo(DICOMImageFrameInfo::Pointer frameinfo, gdcm::Scanner::TagToValue const& tagToValueMapping)
+::DICOMGDCMImageFrameInfo(const DICOMImageFrameInfo::Pointer& frameinfo, gdcm::Scanner::TagToValue const& tagToValueMapping)
 :itk::LightObject()
 ,m_FrameInfo(frameinfo)
 ,m_TagForValue(tagToValueMapping)
@@ -45,29 +45,32 @@ mitk::DICOMGDCMImageFrameInfo::
 {
 }
 
-std::string
+mitk::DICOMDatasetFinding
 mitk::DICOMGDCMImageFrameInfo
 ::GetTagValueAsString(const DICOMTag& tag) const
 {
   const auto mappedValue = m_TagForValue.find( gdcm::Tag(tag.GetGroup(), tag.GetElement()) );
+  DICOMDatasetFinding result;
 
   if (mappedValue != m_TagForValue.cend())
   {
+    result.isValid = true;
+
     if (mappedValue->second != nullptr)
     {
       std::string s(mappedValue->second);
       try
       {
-        return s.erase(s.find_last_not_of(" \n\r\t")+1);
+        result.value = s.erase(s.find_last_not_of(" \n\r\t")+1);
       }
       catch(...)
       {
-        return s;
+        result.value = s;
       }
     }
     else
     {
-      return std::string("");
+      result.value = "";
     }
   }
   else
@@ -77,17 +80,21 @@ mitk::DICOMGDCMImageFrameInfo
 
     if (tag == tagImagePositionPatient)
     {
-      return std::string("0\\0\\0");
+      result.isValid = true;
+      result.value = std::string("0\\0\\0");
     }
     else if (tag == tagImageOrientation)
     {
-      return std::string("1\\0\\0\\0\\1\\0");
+      result.isValid = true;
+      result.value = std::string("1\\0\\0\\0\\1\\0");
     }
     else
     {
-      return std::string("");
+      result.isValid = false;
+      result.value = "";
     }
   }
+  return result;
 }
 
 std::string

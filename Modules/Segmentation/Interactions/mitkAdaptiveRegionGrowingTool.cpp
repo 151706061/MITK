@@ -77,6 +77,8 @@ us::ModuleResource mitk::AdaptiveRegionGrowingTool::GetIconResource() const
 
 void mitk::AdaptiveRegionGrowingTool::Activated()
 {
+  Superclass::Activated();
+
   if (!GetDataStorage()->Exists(m_PointSetNode))
     GetDataStorage()->Add(m_PointSetNode, GetWorkingData());
   m_SeedPointInteractor = mitk::SinglePointDataInteractor::New();
@@ -89,6 +91,13 @@ void mitk::AdaptiveRegionGrowingTool::Deactivated()
 {
   m_PointSet->Clear();
   GetDataStorage()->Remove(m_PointSetNode);
+
+  Superclass::Deactivated();
+}
+
+void mitk::AdaptiveRegionGrowingTool::ConfirmSegmentation()
+{
+  m_ToolManager->ActivateTool(-1);
 }
 
 mitk::DataNode* mitk::AdaptiveRegionGrowingTool::GetReferenceData(){

@@ -154,6 +154,7 @@ set(CPP_FILES
   DataManagement/mitkTransferFunction.cpp
   DataManagement/mitkTransferFunctionInitializer.cpp
   DataManagement/mitkTransferFunctionProperty.cpp
+  DataManagement/mitkTemporoSpatialStringProperty.cpp
   DataManagement/mitkVector.cpp
   DataManagement/mitkVectorProperty.cpp
   DataManagement/mitkVtkInterpolationProperty.cpp
@@ -235,6 +236,7 @@ set(CPP_FILES
   IO/mitkItkLoggingAdapter.cpp
   IO/mitkLegacyFileReaderService.cpp
   IO/mitkLegacyFileWriterService.cpp
+  IO/mitkLocaleSwitch.cpp
   IO/mitkLog.cpp
   IO/mitkMimeType.cpp
   IO/mitkMimeTypeProvider.cpp

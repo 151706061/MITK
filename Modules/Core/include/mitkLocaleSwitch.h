@@ -19,8 +19,6 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 #include "MitkCoreExports.h"
 
-#include <clocale>
-
 namespace mitk
 {
 
@@ -29,7 +27,7 @@ namespace mitk
 
   This helper class can be used to switch to a specific locale
   for a couple of operations. Once the class is destroyed, the previous
-  locale will be restored. This avoid calling or forgetting to call
+  locale will be restored. This avoids calling or forgetting to call
   setlocale() in multiple return locations.
 
   Typically this is used to switch to a "C" locale when parsing or
@@ -40,7 +38,7 @@ namespace mitk
 
   std::string toString(int number)
   {
-    mitk::LocaleSwitch("C"); // installs "C" locale until end of function
+    mitk::LocaleSwitch localeSwitch("C");// installs C locale until the end of the function
 
     std::stringstream parser;
     parser << number;
@@ -49,44 +47,19 @@ namespace mitk
   }
   \endcode
 */
+
 struct MITKCORE_EXPORT LocaleSwitch
 {
-  LocaleSwitch(const std::string& newLocale)
-  : m_NewLocale( newLocale )
-  {
-    // query and keep the current locale
-    const char* currentLocale = std::setlocale(LC_ALL, nullptr);
-    if (currentLocale != nullptr)
-        m_OldLocale = currentLocale;
-    else
-        m_OldLocale = "";
+  explicit LocaleSwitch(const char* newLocale);
 
-    // install the new locale if it different from the current one
-    if (m_NewLocale != m_OldLocale)
-    {
-      if ( ! std::setlocale(LC_ALL, m_NewLocale.c_str()) )
-      {
-        MITK_INFO << "Could not switch to locale " << m_NewLocale;
-        m_OldLocale = "";
-      }
-    }
-  }
+  ~LocaleSwitch();
 
-  ~LocaleSwitch()
-  {
-    if ( !m_OldLocale.empty() && m_OldLocale != m_NewLocale && !std::setlocale(LC_ALL, m_OldLocale.c_str()) )
-    {
-      MITK_INFO << "Could not reset original locale " << m_OldLocale;
-    }
-  }
-
+  LocaleSwitch(LocaleSwitch&) = delete;
+  LocaleSwitch operator=(LocaleSwitch&) = delete;
 private:
 
-  /// locale at instantiation of object
-  std::string m_OldLocale;
-
-  /// locale during life-time of object
-  const std::string m_NewLocale;
+  struct Impl;
+  Impl* m_LocaleSwitchImpl;
 };
 
 }

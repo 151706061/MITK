@@ -19,10 +19,13 @@ set(CPP_FILES
   mitkClassicDICOMSeriesReader.cpp
   mitkThreeDnTDICOMSeriesReader.cpp
   mitkDICOMTag.cpp
+  mitkDICOMTagHelper.cpp
   mitkDICOMTagCache.cpp
   mitkDICOMEnums.cpp
   mitkDICOMReaderConfigurator.cpp
   mitkDICOMFileReaderSelector.cpp
+  mitkIDICOMTagsOfInterest.cpp
+  mitkDICOMProperty.cpp
 )
 
 set(RESOURCE_FILES
@@ -34,4 +37,6 @@ set(RESOURCE_FILES
   configurations/3D/slicelocation.xml
 
   configurations/3DnT/classicreader.xml
+  configurations/3DnT/imageposition_byacquisition.xml
+  configurations/3DnT/imageposition_bytriggertime.xml
 )

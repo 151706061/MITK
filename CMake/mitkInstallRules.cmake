@@ -34,6 +34,24 @@ if(MITK_USE_CTK)
   endif()
 endif()
 
+# related to bug-19679
+if(MACOSX_BUNDLE_NAMES)
+  foreach(bundle_name ${MACOSX_BUNDLE_NAMES})
+    get_property(_qmake_location TARGET ${Qt5Core_QMAKE_EXECUTABLE}
+                 PROPERTY IMPORT_LOCATION)
+    get_filename_component(_qmake_path "${_qmake_location}" DIRECTORY)
+    install(FILES "${_qmake_path}/../plugins/platforms/libqcocoa.dylib"
+            DESTINATION "${bundle_name}.app/Contents/MacOS/platforms"
+            CONFIGURATIONS Release)
+    install(FILES "${_qmake_path}/../plugins/sqldrivers/libqsqlite.dylib"
+            DESTINATION "${bundle_name}.app/Contents/MacOS/sqldrivers"
+            CONFIGURATIONS Release)
+    install(FILES "${_qmake_path}/../plugins/iconengines/libqsvgicon.dylib"
+            DESTINATION "${bundle_name}.app/Contents/MacOS/iconengines"
+            CONFIGURATIONS Release)
+  endforeach()
+endif()
+
 if(WIN32)
   if(MITK_USE_QT)
     get_property(_qmake_location TARGET ${Qt5Core_QMAKE_EXECUTABLE}
@@ -48,6 +66,12 @@ if(WIN32)
     install(FILES "${_qmake_path}/../plugins/imageformats/qsvg.dll"
             DESTINATION "bin/plugins/imageformats"
             CONFIGURATIONS Release)
+    if(MITK_USE_QT_WEBENGINE)
+      MITK_INSTALL( FILES "${_qmake_path}/QtWebEngineProcess.exe")
+    endif()
+    install(DIRECTORY "${_qmake_path}/../resources/"
+            DESTINATION "bin/resources/"
+            CONFIGURATIONS Release)
     install(FILES "${_qmake_path}/../plugins/platforms/qwindowsd.dll"
             DESTINATION "bin/plugins/platforms"
             CONFIGURATIONS Debug)
@@ -56,6 +80,9 @@ if(WIN32)
             CONFIGURATIONS Debug)
     install(FILES "${_qmake_path}/../plugins/imageformats/qsvgd.dll"
             DESTINATION "bin/plugins/imageformats"
+            CONFIGURATIONS Debug)
+    install(DIRECTORY "${_qmake_path}/../resources/"
+            DESTINATION "bin/resources/"
             CONFIGURATIONS Debug)
   endif()
 

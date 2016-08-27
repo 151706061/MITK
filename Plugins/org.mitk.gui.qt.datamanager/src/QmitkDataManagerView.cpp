@@ -126,6 +126,8 @@ void QmitkDataManagerView::CreateQtPartControl(QWidget* parent)
   m_NodeTreeModel->setParent( parent );
   m_NodeTreeModel->SetPlaceNewNodesOnTop(
       prefs->GetBool("Place new nodes on top", true) );
+  m_NodeTreeModel->SetAllowHierarchyChange(
+    prefs->GetBool("Allow changing of parent node", false));
   m_SurfaceDecimation = prefs->GetBool("Use surface decimation", false);
   // Prepare filters
   m_HelperObjectFilterPredicate = mitk::NodePredicateOr::New(
@@ -190,6 +192,9 @@ void QmitkDataManagerView::CreateQtPartControl(QWidget* parent)
 
   QmitkNodeDescriptor* imageDataNodeDescriptor =
     QmitkNodeDescriptorManager::GetInstance()->GetDescriptor("Image");
+
+  auto multiComponentImageDataNodeDescriptor =
+    QmitkNodeDescriptorManager::GetInstance()->GetDescriptor("MultiComponentImage");
 
   QmitkNodeDescriptor* diffusionImageDataNodeDescriptor =
     QmitkNodeDescriptorManager::GetInstance()->GetDescriptor("DiffusionImage");
@@ -335,8 +340,8 @@ void QmitkDataManagerView::CreateQtPartControl(QWidget* parent)
   componentAction->setDefaultWidget(_ComponentWidget);
   QObject::connect( componentAction , SIGNAL( changed() )
     , this, SLOT( ComponentActionChanged() ) );
-  imageDataNodeDescriptor->AddAction(componentAction, false);
-  m_DescriptorActionList.push_back(std::pair<QmitkNodeDescriptor*, QAction*>(imageDataNodeDescriptor,componentAction));
+  multiComponentImageDataNodeDescriptor->AddAction(componentAction, false);
+  m_DescriptorActionList.push_back(std::pair<QmitkNodeDescriptor*, QAction*>(multiComponentImageDataNodeDescriptor,componentAction));
   if (diffusionImageDataNodeDescriptor!=NULL)
   {
       diffusionImageDataNodeDescriptor->AddAction(componentAction, false);
@@ -495,6 +500,9 @@ void QmitkDataManagerView::OnPreferencesChanged(const berry::IBerryPreferences* 
   m_NodeTreeView->expandAll();
 
   m_SurfaceDecimation = prefs->GetBool("Use surface decimation", false);
+
+  m_NodeTreeModel->SetAllowHierarchyChange(
+    prefs->GetBool("Allow changing of parent node", false));
 
   this->GlobalReinit();
 

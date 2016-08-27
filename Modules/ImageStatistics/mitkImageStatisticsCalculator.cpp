@@ -64,7 +64,6 @@ See LICENSE.txt or http://www.mitk.org for details.
 
 #include "itkImage.h"
 
-
 //#define DEBUG_HOTSPOTSEARCH
 
 #define _USE_MATH_DEFINES
@@ -1178,20 +1177,23 @@ namespace mitk
     statistics.GetMinIndex().set_size(image->GetImageDimension());
     statistics.GetMaxIndex().set_size(image->GetImageDimension());
 
-    vnl_vector<int> tmpMaxIndex;
-    vnl_vector<int> tmpMinIndex;
+    vnl_vector<int> maxIndex;
+    vnl_vector<int> minIndex;
 
-    tmpMaxIndex.set_size(image->GetImageDimension() );
-    tmpMinIndex.set_size(image->GetImageDimension() );
+    maxIndex.set_size( VImageDimension );
+    minIndex.set_size( VImageDimension );
 
-    for (unsigned int i=0; i<statistics.GetMaxIndex().size(); i++)
+    typename MinMaxFilterType::IndexType tempMaxIndex = minMaxFilter->GetIndexOfMaximum();
+    typename MinMaxFilterType::IndexType tempMinIndex = minMaxFilter->GetIndexOfMinimum();
+
+    for (unsigned int i=0; i <VImageDimension; i++)
     {
-      tmpMaxIndex[i] = minMaxFilter->GetIndexOfMaximum()[i];
-      tmpMinIndex[i] = minMaxFilter->GetIndexOfMinimum()[i];
+      maxIndex[i] = tempMaxIndex[i];
+      minIndex[i] = tempMinIndex[i];
     }
 
-    statistics.SetMinIndex(tmpMaxIndex);
-    statistics.SetMinIndex(tmpMinIndex);
+    statistics.SetMaxIndex(maxIndex);
+    statistics.SetMinIndex(minIndex);
 
     if( IsHotspotCalculated() && VImageDimension == 3 )
     {
@@ -1571,12 +1573,19 @@ namespace mitk
         //adaptedImage is a single slice (2D). Adding the
         // 3. dimension.
 
+        // FIX Bug 19625 pt. 1
+        // m_Image will yield 4 coordinates if it has 4 Dimensions, the min max value is however only searched for in one timeSliceImage (3D)
+        // the 3D min/max coordinates are then set and the 4th coordinate is blank, causing random numbers to appear in the GUI
+        // (Fix = replace m_Image with VImageDimension (Dimension of image))
+
         vnl_vector<int> maxIndex;
         vnl_vector<int> minIndex;
-        maxIndex.set_size(m_Image->GetDimension());
-        minIndex.set_size(m_Image->GetDimension());
+        unsigned int imageDimension = m_Image->GetDimension();
+        unsigned int maxDimensionsToDisplay = 3; // we do not want to display the time step as part of the coordinates
+        maxIndex.set_size(std::min(imageDimension, maxDimensionsToDisplay));
+        minIndex.set_size(std::min(imageDimension, maxDimensionsToDisplay));
 
-        if (m_MaskingMode == MASKING_MODE_PLANARFIGURE && m_Image->GetDimension()==3)
+        if (m_MaskingMode == MASKING_MODE_PLANARFIGURE && imageDimension == 3)
         {
           maxIndex[m_PlanarFigureCoordinate0] = tempMaxIndex[0];
           maxIndex[m_PlanarFigureCoordinate1] = tempMaxIndex[1];
